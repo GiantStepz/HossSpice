@@ -6,62 +6,10 @@
 #include <iostream>
 #include <fstream>
 
-void HossSpice::parseLine(const std::string &input_line)
-{
-    std::string line = std::regex_replace(input_line, std::regex("^\\s+|\\s+$"), "");
-
-    if (line.empty() || line[0] == '.' || line[0] == '*' || line[0] == '#')
-        return;
-
-    if (line.find("simulate") == 0)
-    {
-        parseSimulation(line);
-        return;
-    }
-
-    std::smatch match;
-    if (line.find("voltage") != std::string::npos)
-    {
-        // std::cout << "Found voltage source: " << line << "\n";
-        if (std::regex_match(line, match, std::regex(R"((\w+)\s*=\s*voltage\s+([^\s]+))")))
-        {
-            // std::cout << "Adding voltage source: " << match[1] << " = " << match[2] << "\n";
-            addComponent(match[1], "voltage", match[2], {match[1]});
-        }
-    }
-    else if (line.find("ground") != std::string::npos)
-    {
-        if (std::regex_match(line, match, std::regex(R"((\w+)\s*=\s*ground)")))
-        {
-            addComponent(match[1], "ground", "0V", {match[1]});
-        }
-    }
-    else if (std::regex_match(line, match, std::regex(R"((\w+)\s*=\s*(\w+)\s+([^\s]+)\s+between\s+(\w+)\s+and\s+(\w+))")))
-    {
-        addComponent(match[1], match[2], match[3], {match[4], match[5]});
-    }
-}
-
 void HossSpice::addComponent(const std::string &name, const std::string &ctype,
                              const std::string &value, const std::vector<std::string> &nodes)
 {
     components.emplace_back(name, ctype, value, nodes);
-}
-
-void HossSpice::parseSimulation(const std::string &line)
-{
-    // std::cout << "Parsing simulation line: " << line << "\n";
-    std::smatch match;
-    if (std::regex_match(line, match, std::regex(R"(simulate\s+(\w+)\s+([\d\w.]+)\s+to\s+([\d\w.]+)\s+step\s+([\d\w.]+))")))
-    {
-        // std::cout << "Found simulation parameters: " << match[1] << ", " << match[2] << ", " << match[3] << ", " << match[4] << "\n";
-        sim = {
-            {"type", match[1]},
-            {"start", match[2]},
-            {"end", match[3]},
-            {"step", match[4]},
-        };
-    }
 }
 
 void HossSpice::generateNetlist(const std::string &filename)

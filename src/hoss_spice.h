@@ -12,17 +12,14 @@
 class HossSpice
 {
 public:
-    void parseLine(const std::string &input_line);
-    void run();
-
-private:
     std::vector<Component> components;
     std::unordered_map<std::string, std::string> netlist;
     std::unordered_map<std::string, std::string> sim;
 
     void addComponent(const std::string &name, const std::string &ctype,
                       const std::string &value, const std::vector<std::string> &nodes);
+    void run();
 
-    void parseSimulation(const std::string &line);
+private:
     void generateNetlist(const std::string &filename);
 };

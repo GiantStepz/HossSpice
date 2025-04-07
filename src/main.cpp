@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "hoss_spice.h"
+#include "parser.h"
 
 int main(int argc, char *argv[])
 {
@@ -20,10 +21,11 @@ int main(int argc, char *argv[])
     }
 
     HossSpice engine;
+    Parser parser(engine);
     std::string line;
     while (std::getline(file, line))
     {
-        engine.parseLine(line);
+        parser.parseLine(line);
     }
     engine.run();
 }

@@ -26,11 +26,15 @@ INCLUDE	:= include
 # define lib directory
 LIB		:= lib
 
+# define grammar directory
+GRAMMAR	:= grammar
+
 ifeq ($(OS),Windows_NT)
 MAIN	:= hoss.exe
 SOURCEDIRS	:= $(SRC)
 INCLUDEDIRS	:= $(INCLUDE)
 LIBDIRS		:= $(LIB)
+GRAMMARDIRS	:= $(GRAMMAR)
 FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
@@ -39,13 +43,14 @@ MAIN	:= hoss
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
 INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
 LIBDIRS		:= $(shell find $(LIB) -type d)
+GRAMMARDIRS	:= $(shell find $(GRAMMAR) -type d)
 FIXPATH = $1
 RM = rm -f
 MD	:= mkdir -p
 endif
 
 # define any directories containing header files other than /usr/include
-INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
+INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%) $(GRAMMARDIRS:%/=%))
 
 # define the C libs
 LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
