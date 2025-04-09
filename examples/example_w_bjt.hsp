@@ -1,0 +1,9 @@
+vdd = voltage 5V
+gnd = ground
+l1 = inductor 10uH between vdd and out
+i1 = current 1mA between vdd and gnd
+d1 = diode 1N4148 between out and gnd
+m1 = nmos NMOS between d g s b
+q1 = npn QNPN between c b e
+
+simulate transient 0s to 1us step 10ns

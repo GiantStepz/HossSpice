@@ -1,3 +1,5 @@
+#pragma once
+
 #include <tao/pegtl.hpp>
 #include "hoss_spice.h"
 #include "hoss_grammar.hpp"
@@ -6,6 +8,7 @@
 class Parser
 {
 public:
+    // FIXME: consider explicitly passing the engine to the parser
     Parser(HossSpice &engine);
 
     void parseLine(const std::string &input_line);

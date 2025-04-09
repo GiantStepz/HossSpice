@@ -34,28 +34,47 @@ namespace hoss
     struct ground_kw : pegtl::string<'g', 'r', 'o', 'u', 'n', 'd'>
     {
     };
-
-    struct component_type : pegtl::sor<resistor_kw, capacitor_kw, voltage_kw, ground_kw>
+    struct inductor_kw : pegtl::string<'i', 'n', 'd', 'u', 'c', 't', 'o', 'r'>
+    {
+    };
+    struct current_kw : pegtl::string<'c', 'u', 'r', 'r', 'e', 'n', 't'>
+    {
+    };
+    struct diode_kw : pegtl::string<'d', 'i', 'o', 'd', 'e'>
+    {
+    };
+    struct transistor_type : pegtl::sor<
+                                 pegtl::string<'n', 'm', 'o', 's'>,
+                                 pegtl::string<'p', 'm', 'o', 's'>,
+                                 pegtl::string<'n', 'p', 'n'>,
+                                 pegtl::string<'p', 'n', 'p'>>
+    {
+    };
+    struct component_type : pegtl::sor<resistor_kw, capacitor_kw, voltage_kw, ground_kw, inductor_kw, current_kw, diode_kw, transistor_type>
     {
     };
 
     struct between : pegtl::seq<
                          pegtl::string<'b', 'e', 't', 'w', 'e', 'e', 'n'>,
                          pegtl::plus<pegtl::space>, identifier,
-                         pegtl::plus<pegtl::space>, pegtl::string<'a', 'n', 'd'>,
-                         pegtl::plus<pegtl::space>, identifier>
+                         pegtl::opt<pegtl::plus<pegtl::space>, pegtl::string<'a', 'n', 'd'>>,
+                         pegtl::plus<pegtl::space>, identifier,
+                         pegtl::opt<pegtl::plus<pegtl::space>, identifier>,
+                         pegtl::opt<pegtl::plus<pegtl::space>, identifier>>
     {
     };
-
     struct component_line : pegtl::seq<
                                 identifier, pegtl::plus<pegtl::space>,
                                 equals, pegtl::plus<pegtl::space>,
                                 component_type,
                                 pegtl::opt<pegtl::plus<pegtl::space>, value>,
-                                pegtl::opt<pegtl::plus<pegtl::space>, between>>
+                                pegtl::opt<pegtl::plus<pegtl::space>, between>,    // check for between first before extra nodes
+                                pegtl::opt<pegtl::plus<pegtl::space>, identifier>, // drain
+                                pegtl::opt<pegtl::plus<pegtl::space>, identifier>, // gate
+                                pegtl::opt<pegtl::plus<pegtl::space>, identifier>, // source
+                                pegtl::opt<pegtl::plus<pegtl::space>, identifier>> // maybe bulk
     {
     };
-
     struct grammar : pegtl::must<component_line>
     {
     };
@@ -85,6 +104,15 @@ namespace hoss
                 comp.name = in.string();
             else
                 comp.nodes.push_back(in.string());
+        }
+    };
+    template <>
+    struct action<value>
+    {
+        template <typename Input>
+        static void apply(const Input &in, parsed_component &comp)
+        {
+            comp.value = in.string();
         }
     };
 
@@ -124,14 +152,40 @@ namespace hoss
             comp.type = "ground";
         }
     };
-
     template <>
-    struct action<value>
+    struct action<inductor_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
         {
-            comp.value = in.string();
+            comp.type = "inductor";
+        }
+    };
+    template <>
+    struct action<current_kw>
+    {
+        template <typename Input>
+        static void apply(const Input &in, parsed_component &comp)
+        {
+            comp.type = "current";
+        }
+    };
+    template <>
+    struct action<diode_kw>
+    {
+        template <typename Input>
+        static void apply(const Input &in, parsed_component &comp)
+        {
+            comp.type = "diode";
+        }
+    };
+    template <>
+    struct action<transistor_type>
+    {
+        template <typename Input>
+        static void apply(const Input &in, parsed_component &comp)
+        {
+            comp.type = in.string();
         }
     };
 

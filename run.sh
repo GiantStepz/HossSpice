@@ -2,4 +2,5 @@
 
 make clean
 make
-./output/hoss examples/basic_rc.hsp
+./output/hoss examples/example_w_bjt.hsp
+cat ./output/netlist.cir

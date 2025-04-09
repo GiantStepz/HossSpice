@@ -1,0 +1,7 @@
+macro nand(a, b, y) {
+    m1 = pmos PMOS between y a vdd vdd
+    m2 = pmos PMOS between y b vdd vdd
+    m3 = nmos NMOS between y a n1 gnd
+    m4 = nmos NMOS between n1 b gnd gnd
+}
+
