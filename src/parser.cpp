@@ -26,7 +26,7 @@ void Parser::parseLine(const std::string &input_line)
 
         tao::pegtl::parse<hoss::grammar, hoss::action>(in, result);
         // FIXME: ground value is being hardcoded. fix in grammar
-        result.value.empty() ? result.value = "0" : result.value;
+        result.value.empty() ? result.value = "0V" : result.value;
         // FIXME: voltage and ground nodes are being hardcoded. fix in grammar
         if (result.nodes.empty())
             result.nodes.push_back(result.name);

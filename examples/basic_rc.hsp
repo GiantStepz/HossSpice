@@ -3,4 +3,9 @@ gnd = ground
 r1 = resistor 10k between vdd and out
 c1 = capacitor 1uF between out and gnd
 
+l1 = inductor 10uH between in and out
+i1 = current 1mA between vdd and gnd
+d1 = diode 1N4148 between anode and cathode
+m1 = nmos NMOS between drain gate source bulk
+
 simulate transient 0s to 1s step 1ms
