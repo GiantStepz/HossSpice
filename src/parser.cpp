@@ -1,8 +1,12 @@
 #include "parser.h"
 #include <iostream>
 #include <regex>
+#include <unordered_set>
 
 Parser::Parser(HossSpice &engine) : engine(engine) {}
+
+static const std::unordered_set<std::string> global_nets = {
+    "vdd", "vddh", "gnd", "vss", "avdd", "dvdd", "avddh", "dvddh", "vcc", "vref"};
 
 void Parser::parseLine(const std::string &input_line)
 {
@@ -143,6 +147,10 @@ std::vector<hoss::parsed_component> Parser::expand_macro(const hoss::macro_call 
             if (net_map.count(node))
             {
                 new_comp.nodes.push_back(net_map[node]);
+            }
+            else if (global_nets.count(node)) // i want to leave global nets alone
+            {
+                new_comp.nodes.push_back(node);
             }
             else
             {
