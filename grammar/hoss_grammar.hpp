@@ -10,7 +10,6 @@ namespace pegtl = tao::pegtl;
 
 namespace hoss
 {
-
     // Grammar rules
     struct identifier : pegtl::plus<pegtl::alnum>
     {
@@ -21,7 +20,11 @@ namespace hoss
     struct value : pegtl::plus<pegtl::not_one<' '>>
     {
     };
-
+    struct macro_kw : pegtl::string<'m', 'a', 'c', 'r', 'o'>
+    {
+    };
+    // component types
+    //  resistor, capacitor, voltage, ground, inductor, current, diode, transistors
     struct resistor_kw : pegtl::string<'r', 'e', 's', 'i', 's', 't', 'o', 'r'>
     {
     };
@@ -75,7 +78,79 @@ namespace hoss
                                 pegtl::opt<pegtl::plus<pegtl::space>, identifier>> // maybe bulk
     {
     };
-    struct grammar : pegtl::must<component_line>
+    // parentheses and braces for macro definitions
+    struct lparen : pegtl::one<'('>
+    {
+    };
+    struct rparen : pegtl::one<')'>
+    {
+    };
+    struct lbrace : pegtl::one<'{'>
+    {
+    };
+    struct rbrace : pegtl::one<'}'>
+    {
+    };
+    struct comma : pegtl::one<','>
+    {
+    };
+    // macro definitions below up until grammar line
+    struct macro_name : identifier
+    {
+    };
+    struct macro_arg : identifier
+    {
+    };
+    struct macro_args : pegtl::list<macro_arg, pegtl::pad<comma, pegtl::space>>
+    {
+    };
+    struct macro_header : pegtl::seq<
+                              macro_kw, pegtl::plus<pegtl::space>, macro_name,
+                              lparen, pegtl::opt<macro_args>, rparen>
+    {
+    };
+    using opt_ws = pegtl::star<pegtl::sor<pegtl::space, pegtl::eol>>;
+    // just catch the full line of raw text
+    struct macro_body_line : pegtl::until<pegtl::eol, pegtl::any>
+    {
+    };
+    struct macro_body : pegtl::star<macro_body_line>
+    {
+    };
+
+    struct macro_definition : pegtl::seq<
+                                  macro_header,
+                                  opt_ws,
+                                  lbrace,
+                                  opt_ws,
+                                  macro_body,
+                                  opt_ws,
+                                  rbrace>
+    {
+    };
+    // macro calls: my_instance = my_macro(arg1, arg2, ...)
+    struct instance_name : identifier
+    {
+    };
+    struct macro_ref_name : identifier
+    {
+    };
+    struct macro_call_arg : identifier
+    {
+    };
+    struct macro_call_args : pegtl::list<macro_call_arg, pegtl::pad<comma, pegtl::space>>
+    {
+    };
+    struct macro_instantiation : pegtl::seq<
+                                     instance_name, pegtl::plus<pegtl::space>,
+                                     equals, pegtl::plus<pegtl::space>,
+                                     macro_ref_name, lparen,
+                                     pegtl::opt<macro_call_args>, rparen>
+    {
+    };
+
+    // *Top level grammar rule*
+    struct grammar : pegtl::must<pegtl::sor<component_line, macro_definition, macro_instantiation>>
     {
     };
 
@@ -87,15 +162,37 @@ namespace hoss
         std::string value;
         std::vector<std::string> nodes;
     };
+    struct parsed_macro
+    {
+        std::string name;
+        std::vector<std::string> args;
+        std::vector<std::string> raw_lines; // using raw lines for macro body lines instead of parsed components
+        std::vector<parsed_component> body;
+    };
 
-    // action handlers
+    inline std::unordered_map<std::string, parsed_macro> macro_table;
+
+    struct current_macro
+    {
+        parsed_macro macro;
+        std::vector<std::string> arg_temp;
+    };
+
+    struct macro_call
+    {
+        std::string instance_name;
+        std::string macro_name;
+        std::vector<std::string> call_args;
+    };
+
+    // action handlers for component lines
     template <typename Rule>
-    struct action : pegtl::nothing<Rule>
+    struct component_action : pegtl::nothing<Rule>
     {
     };
 
     template <>
-    struct action<identifier>
+    struct component_action<identifier>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -107,7 +204,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<value>
+    struct component_action<value>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -115,9 +212,8 @@ namespace hoss
             comp.value = in.string();
         }
     };
-
     template <>
-    struct action<resistor_kw>
+    struct component_action<resistor_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -126,7 +222,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<capacitor_kw>
+    struct component_action<capacitor_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -135,7 +231,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<voltage_kw>
+    struct component_action<voltage_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -144,7 +240,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<ground_kw>
+    struct component_action<ground_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -153,7 +249,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<inductor_kw>
+    struct component_action<inductor_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -162,7 +258,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<current_kw>
+    struct component_action<current_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -171,7 +267,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<diode_kw>
+    struct component_action<diode_kw>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -180,7 +276,7 @@ namespace hoss
         }
     };
     template <>
-    struct action<transistor_type>
+    struct component_action<transistor_type>
     {
         template <typename Input>
         static void apply(const Input &in, parsed_component &comp)
@@ -189,20 +285,133 @@ namespace hoss
         }
     };
 
+    // action handlers for macro lines
+    template <typename Rule>
+    struct macro_action : pegtl::nothing<Rule>
+    {
+    };
+
+    template <>
+    struct macro_action<macro_name>
+    {
+        template <typename Input>
+        static void apply(const Input &in, current_macro &state, parsed_component &comp)
+        {
+            state.macro.name = in.string();
+        }
+    };
+    template <>
+    struct macro_action<macro_arg>
+    {
+        template <typename Input>
+        static void apply(const Input &in, current_macro &state, parsed_component &)
+        {
+            state.arg_temp.push_back(in.string());
+        }
+    };
+    // For debugging purposes
     // template <>
-    // struct action<simple_component_line>
+    // struct macro_action<macro_args>
     // {
     //     template <typename Input>
-    //     static void apply(const Input &in, parsed_component &comp)
+    //     static void apply(const Input &in, current_macro &, parsed_component &)
     //     {
-    //         comp.type = "ground";
-    //         comp.value = "0V";
-    //         // Use name from identifier action
-    //         // No nodes needed, or just default to the component name
-    //         if (comp.nodes.empty())
-    //         {
-    //             comp.nodes.push_back(comp.name);
-    //         }
+    //         std::cout << "[+] Matched args list: " << in.string() << "\n";
     //     }
     // };
+    // // Also for debugging purposes
+    // template <>
+    // struct macro_action<macro_header>
+    // {
+    //     template <typename Input>
+    //     static void apply(const Input &in, current_macro &, parsed_component &)
+    //     {
+    //         std::cout << "[+] Matched macro header: " << in.string() << "\n";
+    //     }
+    // };
+    template <>
+    struct macro_action<macro_body_line>
+    {
+        template <typename Input>
+        static void apply(const Input &in, current_macro &state, parsed_component &comp)
+        {
+            std::string line = in.string();
+            state.macro.raw_lines.push_back(line);
+        }
+    };
+    // Debugging only:
+    // template <>
+    // struct macro_action<macro_body>
+    // {
+    //     template <typename Input>
+    //     static void apply(const Input &in, current_macro &, parsed_component &)
+    //     {
+    //         std::cout << "[+] Matched macro body: " << in.string() << "\n";
+    //     }
+    // };
+    template <>
+    struct macro_action<macro_definition>
+    {
+        template <typename Input>
+        static void apply(const Input &in, current_macro &state, parsed_component &comp)
+        {
+            state.macro.args = std::move(state.arg_temp);
+            macro_table[state.macro.name] = state.macro;
+            state = {};
+        }
+    };
+
+    // action handlers for macro calls
+    template <typename Rule>
+    struct macro_instantiation_action : pegtl::nothing<Rule>
+    {
+    };
+
+    template <>
+    struct macro_instantiation_action<instance_name>
+    {
+        template <typename Input>
+        static void apply(const Input &in, macro_call &call)
+        {
+            call.instance_name = in.string();
+        }
+    };
+    template <>
+    struct macro_instantiation_action<macro_ref_name>
+    {
+        template <typename Input>
+        static void apply(const Input &in, macro_call &call)
+        {
+            call.macro_name = in.string();
+        }
+    };
+    template <>
+    struct macro_instantiation_action<macro_call_arg>
+    {
+        template <typename Input>
+        static void apply(const Input &in, macro_call &call)
+        {
+            call.call_args.push_back(in.string());
+        }
+    };
+    template <>
+    struct macro_instantiation_action<macro_instantiation>
+    {
+        template <typename Input>
+        static void apply(const Input &in, macro_call &call)
+        {
+            // this is optional but i think it would be good for user debugging
+            if (macro_table.find(call.macro_name) == macro_table.end())
+            {
+                throw std::runtime_error("Macro not defined: " + call.macro_name);
+            }
+
+            // print it out for debugging
+            // std::cout << "[Macro] Call: " << call.instance_name
+            //           << " = " << call.macro_name << "(";
+            // for (auto &arg : call.call_args)
+            //     std::cout << arg << " ";
+            // std::cout << ")\n";
+        }
+    };
 }
