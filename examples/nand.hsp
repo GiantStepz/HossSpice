@@ -5,3 +5,4 @@ macro nand(a, b, y) {
     m4 = nmos NMOS between n1 b gnd gnd
 }
 
+nand1 = nand(in1, in2, out)

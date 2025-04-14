@@ -12,7 +12,9 @@ public:
     Parser(HossSpice &engine);
 
     void parseLine(const std::string &input_line);
+    std::string trim(const std::string &s);
     void parseSimulation(const std::string &input_line);
+    std::vector<hoss::parsed_component> expand_macro(const hoss::macro_call &call);
 
 private:
     HossSpice &engine;
