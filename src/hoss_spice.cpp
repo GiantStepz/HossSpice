@@ -12,7 +12,10 @@ void HossSpice::addComponent(const std::string &name, const std::string &ctype,
     components.emplace_back(name, ctype, value, nodes);
     if (model_gen.default_models_.find(value) != model_gen.default_models_.end())
     {
-        models_used.push_back(value);
+        if (std::find(models_used.begin(), models_used.end(), value) == models_used.end())
+        {
+            models_used.push_back(value);
+        }
     }
 }
 // FIXME: Should probably create netlisting class
@@ -24,6 +27,8 @@ void HossSpice::generateNetlist(const std::string &filename)
         std::cerr << "Error opening netlist file: " << filename << "\n";
         return;
     }
+    // FIXME: add title to netlist_file with circuit name somehow
+
     // generate model definitions - this isnt great and should be revised
     netlist_file << model_gen.generateModelDefs(models_used) << "\n";
 
@@ -75,9 +80,9 @@ void HossSpice::generateNetlist(const std::string &filename)
     }
     if (sim["type"] == "transient")
     {
-        netlist_file << ".tran " << sim["step"] << " " << sim["end"] << "\n";
+        netlist_file << "\n.tran " << sim["step"] << " " << sim["end"] << "\n";
     }
-    netlist_file << ".end\n";
+    netlist_file << "\n.end\n";
 
     netlist_file.close();
     std::cout << "\n[+] Netlist written to: " << filename << "\n";
