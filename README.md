@@ -1,6 +1,6 @@
-## HossSpice - simple scripting language for circuit simulation
+## HossSpice - simple parser/language for circuit simulation
 
-I started this just for fun but I'll likely keep working on it as there are many things I want to implement. It hardly does anything now. 
+I started this just for fun but I'll likely keep working on it as there are many things I want to implement. Currently it is capable of describing reusable analog and digital circuit components and simulations.
 
 The goal is to offer an intuitive and readable syntax for circuit modeling, simulation setup, and netlist generation. 
 
@@ -13,8 +13,11 @@ then execute it from the command line, and HossSpice will:
 ## Current features:
 - Parse .hsp files w/ basic circuit definitions
 - Define voltage sources, resistors, capacitors, and ground nodes
-- Describe transient simulations
+- Describe and run transient simulations
 - Generate spice .cir netlists
+- Macro support w/ net substitution for reusable components
+- Simple model generation
+- DC Operating Point Analysis
 
 ## Try:
 **Linux**
