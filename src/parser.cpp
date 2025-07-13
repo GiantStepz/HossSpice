@@ -59,8 +59,8 @@ void Parser::parseLine(const std::string &input_line)
     }
     catch (const tao::pegtl::parse_error &e)
     {
-        const auto p = e.positions.front();
-        std::cerr << "Parsing error at " << p.line << ":" << p.byte_in_line << " - " << e.what() << "\n";
+        const auto p = e.positions().front();
+        std::cerr << "Parsing error at " << p.line << ":" << p.byte << " - " << e.what() << "\n";
     }
     catch (const std::runtime_error &e)
     {
@@ -131,9 +131,9 @@ std::vector<hoss::parsed_component> Parser::expand_macro(const hoss::macro_call 
         }
         catch (const tao::pegtl::parse_error &e)
         {
-            const auto p = e.positions.front();
+            const auto p = e.positions().front();
             std::cerr << "[ERROR] Failed to parse macro component: " << e.what()
-                      << " at line " << p.line << ", column " << p.byte_in_line << "\n";
+                      << " at line " << p.line << ", column " << p.byte << "\n";
             continue; // skip this component
         }
 
